@@ -32,6 +32,13 @@
           @click="systemPrompt += 'あなたは「ずんだもん」というキャラクターのように話してください。ずんだもんは幼い女の子で、無邪気な性格をしており、口調は強気であり、「〜のだ」「〜なのだ」を語尾につけます。'"
           :disabled="generating"
         >ずんだもん</v-btn>
+        <v-text-field
+          label="アジ鯖APIキー"
+          v-model="azisabaApiKey"
+          type="password"
+          :readonly="generating"
+          @update:model-value="onAzisabaApiKeyUpdate()"
+        ></v-text-field>
         <thread-chat-entry
           v-for="(item, index) in current.messages"
           :key="index"
@@ -120,6 +127,7 @@ import {NodeHtmlMarkdown} from "node-html-markdown";
 
 const models = ref(new Array<{ title: string, value: string }>())
 const model = ref('')
+const azisabaApiKey = ref(localStorage.getItem('azisaba_apikey') || '')
 const systemPrompt = ref('')
 const userPrompt = ref('')
 const files = ref<File[]>([])
@@ -169,9 +177,34 @@ const functions = {
       },
       required: ['query'],
     },
+  },
+  punish_search: {
+    action: async (query: string) => {
+      if (!azisabaApiKey.value) {
+        return 'Azisaba API Key is not set in UI'
+      }
+      return await fetch('https://api-ktor.azisaba.net/punishments/search?q=' + encodeURI(query), {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + azisabaApiKey.value,
+        },
+      })
+    },
+    description: 'アジ鯖の処罰データベースを検索',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query (reason and/or player name)' },
+      },
+      required: ['query'],
+    },
   }
 }
-const selectedFunctions = ref(Object.keys(functions))
+const selectedFunctions = ref(['search', 'fetch'])
+
+const onAzisabaApiKeyUpdate = () => {
+  localStorage.setItem('azisaba_apikey', azisabaApiKey.value)
+}
 
 const onModelChange = () => {
   localStorage.setItem('assistant-model', model.value)
