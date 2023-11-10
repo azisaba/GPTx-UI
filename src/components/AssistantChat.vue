@@ -188,13 +188,13 @@ const functions = {
         headers: {
           Authorization: 'Bearer ' + azisabaApiKey.value,
         },
-      })
+      }).then(res => res.text())
     },
     description: 'アジ鯖の処罰データベースを検索',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'Search query (reason and/or player name)' },
+        query: { type: 'string', description: 'Search query (reason and/or player name). Query should contain few words as possible.' },
       },
       required: ['query'],
     },
