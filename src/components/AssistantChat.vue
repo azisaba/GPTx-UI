@@ -194,7 +194,7 @@ const functions = {
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'Search query (reason and/or player name). Query should contain few words as possible. (For example, if "please lookup for /report abuse", then query should be "report")' },
+        query: { type: 'string', description: 'Search query (reason and/or player name). Query should contain few words as possible. (For example, just one word: "report")' },
       },
       required: ['query'],
     },
