@@ -179,11 +179,11 @@ const functions = {
     },
   },
   player_info: {
-    action: async ({query}: { query: string }) => {
+    action: async ({name}: { name: string }) => {
       if (!azisabaApiKey.value) {
         return 'Azisaba API Key is not set in UI'
       }
-      return await fetch(`https://api-ktor.azisaba.net/players/by-name/${encodeURI(query)}`, {
+      return await fetch(`https://api-ktor.azisaba.net/players/by-name/${encodeURI(name)}`, {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + azisabaApiKey.value,
