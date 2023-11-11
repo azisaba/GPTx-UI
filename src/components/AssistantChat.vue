@@ -178,6 +178,27 @@ const functions = {
       required: ['query'],
     },
   },
+  player_info: {
+    action: async ({query}: { query: string }) => {
+      if (!azisabaApiKey.value) {
+        return 'Azisaba API Key is not set in UI'
+      }
+      return await fetch(`https://api-ktor.azisaba.net/players/by-name/${encodeURI(query)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + azisabaApiKey.value,
+        },
+      }).then(res => res.text())
+    },
+    description: 'アジ鯖のプレイヤー情報を取得',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Player name' },
+      },
+      required: ['name'],
+    },
+  },
   punish_search_player: {
     action: async ({query}: { query: string }) => {
       if (!azisabaApiKey.value) {
