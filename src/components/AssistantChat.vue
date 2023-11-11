@@ -139,7 +139,7 @@ const retrieval = ref(true)
 const sidebar = ref(null)
 const functions = {
   fetch: {
-    action: async (url: string): Promise<string> => {
+    action: async ({url}: { url: string }): Promise<string> => {
       const urlObject = new URL(url)
       const res = await fetch(apiUrl('request'), { method: 'POST', body: url })
       if (urlObject.pathname.endsWith(".pdf")) {
@@ -161,7 +161,7 @@ const functions = {
     },
   },
   search: {
-    action: async (query: string) => {
+    action: async ({query}: { query: string }) => {
       const json = await fetch(apiUrl('search'), { method: 'POST', body: query }).then(res => res.json())
       if (json.kind) {
         return (json.items as any[]).map(item => `- [${item.title}](${item.link}): ${item.snippet}`).join('\n')
@@ -178,23 +178,51 @@ const functions = {
       required: ['query'],
     },
   },
-  punish_search: {
-    action: async (query: string) => {
+  punish_search_player: {
+    action: async ({query}: { query: string }) => {
       if (!azisabaApiKey.value) {
         return 'Azisaba API Key is not set in UI'
       }
-      return await fetch('https://api-ktor.azisaba.net/punishments/search?q=' + encodeURI(query), {
+      return await fetch(`https://api-ktor.azisaba.net/players/by-name/${encodeURI(query)}/punishments`, {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + azisabaApiKey.value,
         },
       }).then(res => res.text())
     },
-    description: 'アジ鯖の処罰データベースを検索',
+    description: 'アジ鯖の処罰データベースをプレイヤー名から検索',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'Search query (reason and/or player name). Query should contain few words as possible. (For example, just one word: "report")' },
+        query: { type: 'string', description: 'Search query (player name)' },
+      },
+      required: ['query'],
+    },
+  },
+  punish_search_reason: {
+    action: async (args: { [key: string]: any }) => {
+      if (!azisabaApiKey.value) {
+        return 'Azisaba API Key is not set in UI'
+      }
+      const url = new URL('https://api-ktor.azisaba.net/punishments/search')
+      for (const key of Object.keys(args)) {
+        url.searchParams.set(key, String(args[key]))
+      }
+      return await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + azisabaApiKey.value,
+        },
+      }).then(res => res.text())
+    },
+    description: 'アジ鯖の処罰データベースを処罰理由から検索',
+    parameters: {
+      type: 'object',
+      properties: {
+        q: { type: 'string', description: 'Search query' },
+        type: { type: 'string', enum: ['BAN', 'MUTE', 'KICK', 'WARNING', 'CAUTION', 'NOTE'], description: 'Filter by punishment type' },
+        revertedOnly: { type: 'boolean', description: 'Filter by reverted punishments only, if true.' },
+        server: { type:  'string', description: 'Filter by server name (in english)' },
       },
       required: ['query'],
     },
@@ -308,7 +336,7 @@ const awaitRun = (run: Run) => {
           }
           if (res.status === 'requires_action' && res.required_action?.type === 'submit_tool_outputs') {
             const outputs = await Promise.all(res.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
-              const args = Object.values(JSON.parse(toolCall.function.arguments))
+              const args = JSON.parse(toolCall.function.arguments)
               return {
                 tool_call_id: toolCall.id,
                 output: await functions[toolCall.function.name].action.apply(null, args)
