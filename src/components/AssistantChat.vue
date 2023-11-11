@@ -219,12 +219,12 @@ const functions = {
     parameters: {
       type: 'object',
       properties: {
-        q: { type: 'string', description: 'Search query' },
+        q: { type: 'string', description: 'Search query (Search by punishment reason)' },
         type: { type: 'string', enum: ['BAN', 'MUTE', 'KICK', 'WARNING', 'CAUTION', 'NOTE'], description: 'Filter by punishment type' },
         revertedOnly: { type: 'boolean', description: 'Filter by reverted punishments only, if true.' },
         server: { type:  'string', description: 'Filter by server name (in english)' },
       },
-      required: ['query'],
+      required: ['q'],
     },
   }
 }
@@ -337,9 +337,10 @@ const awaitRun = (run: Run) => {
           if (res.status === 'requires_action' && res.required_action?.type === 'submit_tool_outputs') {
             const outputs = await Promise.all(res.required_action.submit_tool_outputs.tool_calls.map(async (toolCall) => {
               const args = JSON.parse(toolCall.function.arguments)
+              console.log('Calling function ' + toolCall.function.name, args)
               return {
                 tool_call_id: toolCall.id,
-                output: await functions[toolCall.function.name].action.apply(null, args)
+                output: await functions[toolCall.function.name].action(args)
               }
             }))
             console.log('Submitting tool outputs', outputs)
