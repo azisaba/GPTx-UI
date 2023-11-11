@@ -213,7 +213,15 @@ const functions = {
         headers: {
           Authorization: 'Bearer ' + azisabaApiKey.value,
         },
-      }).then(res => res.text())
+      }).then(res => res.json()).then(res => {
+        return res.map((punishment: any) => {
+          return {
+            ...punishment,
+            start_date: new Date(punishment.start).toLocaleString(),
+            end_date: punishment.end <= 0 ? 'Permanent' : new Date(punishment.end).toLocaleString()
+          }
+        })
+      }).then(res => JSON.stringify(res))
     },
     description: 'アジ鯖の処罰データベースを処罰理由から検索',
     parameters: {
